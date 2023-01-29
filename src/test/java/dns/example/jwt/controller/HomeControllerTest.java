@@ -2,19 +2,23 @@ package dns.example.jwt.controller;
 
 import dns.example.jwt.config.SecurityConfig;
 import dns.example.jwt.service.TokenService;
+import org.hamcrest.core.StringContains;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.hamcrest.core.StringContains.containsString;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
+import static org.springframework.http.HttpHeaders.WWW_AUTHENTICATE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest({HomeController.class, AuthController.class})
 @Import({SecurityConfig.class, TokenService.class})
@@ -31,20 +35,34 @@ class HomeControllerTest {
 
     @Test
     void rootWhenAuthenticatedThenSaysHelloUser() throws Exception {
+        this.mvc.perform(get("/")
+                        .header("Authorization", "Bearer " + getJwtToken()))
+                .andExpect(content().string("Hello dnunez!!"));
+    }
+
+    @Test
+    void preAuthorizedEndpointSuccess() throws Exception {
+        this.mvc.perform(get("/secured-read")
+                        .header("Authorization", "Bearer " + getJwtToken()))
+                .andExpect(content().string("This is a secured endpoint with read authority!!"));
+    }
+
+    @Test
+    void preAuthorizedEndpointFailsForMissingAuthority() throws Exception {
+        this.mvc.perform(get("/secured-write")
+                        .header("Authorization", "Bearer " + getJwtToken()))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string(WWW_AUTHENTICATE, containsString("Bearer error=\"insufficient_scope\"")));
+    }
+
+    private String getJwtToken() throws Exception {
         MvcResult result = this.mvc.perform(post("/token")
-                        .with(httpBasic("dnunez", "pass")))
+                        .header(CONTENT_TYPE, APPLICATION_JSON_VALUE)
+                        .content("{ \"username\": \"dnunez\", \"password\": \"pass\" }"))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String token = result.getResponse().getContentAsString();
-
-        this.mvc.perform(get("/")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(content().string("Hello dnunez!!"));
-
-        this.mvc.perform(get("/")
-                        .with(httpBasic("dnunez", "pass")))
-                .andExpect(content().string("Hello dnunez!!"));
+        return result.getResponse().getContentAsString();
     }
 
     @Test
