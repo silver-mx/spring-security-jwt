@@ -1,11 +1,10 @@
 package dns.example.jwt;
 
-import dns.example.jwt.config.RsaKeyProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-@EnableConfigurationProperties(RsaKeyProperties.class)
+@EnableConfigurationProperties
 @SpringBootApplication
 public class SpringSecurityJwtApplication {
 
