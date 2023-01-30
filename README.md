@@ -1,4 +1,10 @@
-# Steps to generate the asymmetric keys with OpenSSL
+# About the repository
+
+This repository is created based on Dan Vega's tutorial: https://www.danvega.dev/blog/2022/09/06/spring-security-jwt/
+
+Github: https://github.com/danvega/jwt-username-password
+
+## Steps to generate the asymmetric keys with OpenSSL
 
 *Source*: https://www.danvega.dev/blog/2022/09/06/spring-security-jwt/
 
